@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>HackerTTS Pro — Vozes Reais com ElevenLabs + IA</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{--bg:#08090b;--card:#0f1720;--accent:#06b6d4;--accent2:#f472b6;--muted:#94a3b8;--text:#e6eef3;--green:#4ade80;--red:#f87171;--amber:#fbbf24}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Arial;background:linear-gradient(180deg,#020204 0%,#0a0e1a 50%,#020204 100%);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .wrap{width:1140px;max-width:100%;background:var(--card);border-radius:16px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.03)}
+  h1{margin:0 0 2px;color:var(--accent);font-size:1.5rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .subtitle{color:var(--muted);font-size:12px;margin:0 0 14px}
+  textarea{width:100%;height:160px;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,.05);background:#051019;color:var(--text);resize:vertical;font-size:14px;font-family:inherit;transition:border .2s}
+  textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(6,182,212,.15)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:12px}
+  .grid label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;background:rgba(255,255,255,.02);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.03)}
+  .grid label .val{color:var(--text);font-weight:600;font-size:13px}
+  select,input[type=range]{background:#071426;color:var(--text);border-radius:6px;padding:5px 8px;border:1px solid rgba(255,255,255,.06);font-size:13px}
+  input[type=range]{height:4px;appearance:none;-webkit-appearance:none;background:linear-gradient(90deg,var(--accent),#0ea5a4);border-radius:2px;padding:0;border:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid #0a1628}
+  input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px;cursor:pointer}
+  .checkbox-group{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0;align-items:center}
+  .checkbox-group label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .btn{background:linear-gradient(135deg,#0ea5a4,#06b6d4);color:#021018;padding:9px 18px;border-radius:10px;font-weight:700;border:none;cursor:pointer;font-size:13px;transition:opacity .2s,transform .1s;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{opacity:.9;transform:translateY(-1px)}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn-outline{background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--text)}
+  .btn-outline:hover{background:rgba(255,255,255,.05)}
+  .btn-pink{background:linear-gradient(135deg,#ec4899,#f472b6);color:#021018}
+  .btn-green{background:linear-gradient(135deg,#22c55e,#4ade80);color:#021018}
+  .btn-red{background:linear-gradient(135deg,#ef4444,#f87171);color:#021018}
+  .btn-amber{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#021018}
+  .btn-sm{padding:5px 10px;font-size:11px;border-radius:6px}
+  #log{font-family:'Cascadia Code','Fira Code',monospace;font-size:12px;color:var(--green);margin-top:10px;padding:8px 12px;background:rgba(0,0,0,.3);border-radius:8px;white-space:pre-wrap;min-height:32px;max-height:140px;overflow-y:auto;line-height:1.5}
+  #log.error{color:var(--red)}
+  #log.warn{color:var(--amber)}
+  #statusBar{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--muted)}
+  #statusBar span{background:rgba(255,255,255,.03);padding:3px 8px;border-radius:4px}
+  .tab-bar{display:flex;gap:2px;margin-bottom:12px;background:rgba(0,0,0,.2);border-radius:8px;padding:3px;flex-wrap:wrap}
+  .tab{background:transparent;border:none;color:var(--muted);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;transition:.2s}
+  .tab.active{background:rgba(6,182,212,.15);color:var(--accent);font-weight:600}
+  .tab:hover:not(.active){background:rgba(255,255,255,.04)}
+  .presets{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}
+  .preset-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--muted);padding:3px 10px;border-radius:10px;cursor:pointer;font-size:11px;transition:.2s}
+  .preset-btn:hover{background:rgba(6,182,212,.12);color:var(--accent);border-color:var(--accent)}
+  .provider-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:6px}
+  .badge-eleven{background:rgba(255,107,0,.2);color:#ff6b00}
+  .badge-openai{background:rgba(0,200,150,.2);color:#00c896}
+  .badge-gemini{background:rgba(66,133,244,.2);color:#4285f4}
+  .badge-xai{background:rgba(255,255,255,.1);color:#aaa}
+  .badge-native{background:rgba(255,255,255,.05);color:var(--muted)}
+  .voice-desc{font-size:11px;color:var(--muted);margin-top:6px;padding:6px 8px;background:rgba(0,0,0,.15);border-radius:6px;min-height:20px}
+  @media(max-width:600px){.grid{grid-template-columns:1fr 1fr}.wrap{padding:14px}}
+  .loading-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .history-item, .preset-item { background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; margin-bottom: 6px; border: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎧 HackerTTS <span style="font-size:13px;color:var(--muted);font-weight:400">— Vozes Reais ElevenLabs, OpenAI, Gemini, Grok</span></h1>
+  <p class="subtitle">⚡ Gratuito • sem API key • vozes de pessoas reais • múltiplos providers de IA</p>
+
+  <div class="tab-bar">
+    <button class="tab active" data-tab="main">🎤 Falar</button>
+    <button class="tab" data-tab="voices">🗣 Vozes</button>
+    <button class="tab" data-tab="effects">🎛 Efeitos</button>
+    <button class="tab" data-tab="presets">💾 Presets</button>
+    <button class="tab" data-tab="history">📜 Histórico</button>
+  </div>
+
+  <div class="tab-content" id="tab-main">
+    <textarea id="text" placeholder="Digite ou cole o texto aqui..."></textarea>
+
+    <div class="presets">
+      <span style="font-size:11px;color:var(--muted)">⚡ Rápidas:</span>
+      <button class="preset-btn" data-text="Acesso negado. Você não tem permissão para entrar neste sistema.">🚫 Acesso negado</button>
+      <button class="preset-btn" data-text="Iniciando protocolo de segurança. Todos os arquivos serão criptografados em 10 segundos.">🔐 Protocolo</button>
+      <button class="preset-btn" data-text="Você achou que era seguro, mas eu estou aqui. Seus dados já foram comprometidos.">👻 Mensagem</button>
+      <button class="preset-btn" data-text="Hackeando o mainframe... Acesso ao núcleo do sistema estabelecido.">💻 Hackeando</button>
+      <button class="preset-btn" data-text="Eu sou a sombra na rede. O fantasma no sistema. Você não pode me parar.">🌑 Sombra</button>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+      <label>Provedor TTS:
+        <select id="providerSelect">
+          <option value="elevenlabs">🎯 ElevenLabs (vozes realistas)</option>
+          <option value="openai">🤖 OpenAI TTS (GPT-4o mini)</option>
+          <option value="gemini">🌀 Gemini TTS</option>
+          <option value="xai">🔶 xAI Grok</option>
+          <option value="native">🌐 Navegador (offline)</option>
+        </select>
+      </label>
+
+      <label>Voz <span id="voiceCount" style="font-size:11px;color:var(--muted)"></span>:
+        <select id="voiceSelect"></select>
+      </label>
+
+      <label>Modelo:
+        <select id="modelSelect">
+          <option value="eleven_multilingual_v2">Eleven Multilingual v2</option>
+          <option value="eleven_flash_v2_5">Eleven Flash v2.5</option>
+          <option value="eleven_turbo_v2">Eleven Turbo v2</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="voice-desc" id="voiceDescription">Selecione uma voz para ver a descrição</div>
+
+    <div class="grid">
+      <label>Velocidade <span class="val" id="rateVal">1.0</span>
+        <input id="rate" type="range" min="0.5" max="1.8" step="0.05" value="1.0">
+      </label>
+      <label>Volume <span class="val" id="volumeVal">1.0</span>
+        <input id="volume" type="range" min="0" max="1.5" step="0.05" value="1.0">
+      </label>
+      <label>Stability <span class="val" id="stabilityVal">0.5</span>
+        <input id="stability" type="range" min="0" max="1" step="0.05" value="0.5">
+      </label>
+      <label>Similarity <span class="val" id="similarityVal">0.75</span>
+        <input id="similarity" type="range" min="0" max="1" step="0.05" value="0.75">
+      </label>
+    </div>
+
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="chkAutoPlay" checked> Auto-play ao colar</label>
+      <label><input type="checkbox" id="chkRepeat"> Repetir</label>
+      <label><input type="checkbox" id="chkDownload"> Baixar MP3 automático</label>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="speakBtn">▶ Falar com IA</button>
+      <button class="btn" id="stopBtn" disabled>⏹ Parar</button>
+      <button class="btn btn-pink" id="downloadBtn" disabled>💾 Baixar MP3</button>
+      <button class="btn btn-green" id="copyBtn" disabled>📋 Copiar Base64</button>
+      <button class="btn btn-outline" id="clearBtn">✖ Limpar</button>
+      <span id="loadingIndicator" style="display:none;font-size:12px;color:var(--accent);align-self:center"><span class="loading-spinner"></span> Gerando...</span>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-voices" style="display:none">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <input id="voiceSearch" placeholder="Buscar voz..." style="background:#071426;border:1px solid rgba(255,255,255,.06);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;flex:1;min-width:120px">
+    </div>
+    <div id="voiceBrowser" style="max-height:350px;overflow-y:auto;font-size:13px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px">
+      <span style="color:var(--muted);grid-column:1/-1">Carregando vozes...</span>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-effects" style="display:none">
+    <div class="grid">
+      <label>Reverb:
+        <select id="reverb">
+          <option value="none">Nenhum</option>
+          <option value="light">Leve</option>
+          <option value="medium">Médio</option>
+          <option value="heavy">Pesado</option>
+        </select>
+      </label>
+      <label>Eco <span class="val" id="delayVal">0ms</span>
+        <input id="delay" type="range" min="0" max="500" step="10" value="0">
+      </label>
+      <label>Distorção <span class="val" id="distVal">0%</span>
+        <input id="distortion" type="range" min="0" max="100" step="1" value="0">
+      </label>
+      <label>Filtro <span class="val" id="filterVal">20kHz</span>
+        <input id="filter" type="range" min="200" max="20000" step="50" value="20000">
+      </label>
+    </div>
+    <div class="actions">
+      <button class="btn btn-sm btn-outline" id="resetFxBtn">↺ Resetar</button>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-presets" style="display:none">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <input id="presetName" placeholder="Nome do preset..." style="background:#071426;border:1px solid rgba(255,255,255,.06);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;flex:1;min-width:120px">
+      <button class="btn btn-sm" id="savePresetBtn">💾 Salvar Config Atual</button>
+    </div>
+    <div id="presetList" style="font-size:13px"></div>
+  </div>
+
+  <div class="tab-content" id="tab-history" style="display:none">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <span style="color:var(--muted);font-size:12px">Últimas falas:</span>
+      <button class="btn btn-sm btn-outline" id="clearHistoryBtn">🗑 Limpar</button>
+    </div>
+    <div id="historyList" style="max-height:300px;overflow-y:auto;font-size:12px"></div>
+  </div>
+
+  <div id="statusBar">
+    <span id="statusChars">0 caracteres</span>
+    <span id="statusDuration">~0s</span>
+    <span id="statusProvider">ElevenLabs</span>
+    <span id="statusVoiceName">—</span>
+    <span id="statusState">⏹ Pronto</span>
+  </div>
+
+  <div id="log"></div>
+</div>
+
+<script src="https://js.puter.com/v2/"></script>
+
+<script>
+(async function(){
+  // ==================== REFERÊNCIAS DOM ====================
+  const $ = id => document.getElementById(id);
+  const textEl = $('text');
+  const providerSelect = $('providerSelect');
+  const voiceSelect = $('voiceSelect');
+  const modelSelect = $('modelSelect');
+  const voiceSearch = $('voiceSearch');
+  const rateEl = $('rate');
+  const volumeEl = $('volume');
+  const stabilityEl = $('stability');
+  const similarityEl = $('similarity');
+  const reverbEl = $('reverb');
+  const delayEl = $('delay');
+  const distortionEl = $('distortion');
+  const filterEl = $('filter');
+  const speakBtn = $('speakBtn');
+  const stopBtn = $('stopBtn');
+  const downloadBtn = $('downloadBtn');
+  const copyBtn = $('copyBtn');
+  const clearBtn = $('clearBtn');
+  const log = $('log');
+  const loadingIndicator = $('loadingIndicator');
+  const voiceDescription = $('voiceDescription');
+  const voiceBrowser = $('voiceBrowser');
+  const historyList = $('historyList');
+  const clearHistoryBtn = $('clearHistoryBtn');
+  const presetList = $('presetList');
+  const savePresetBtn = $('savePresetBtn');
+  const presetName = $('presetName');
+  const resetFxBtn = $('resetFxBtn');
+  const statusChars = $('statusChars');
+  const statusDuration = $('statusDuration');
+  const statusProvider = $('statusProvider');
+  const statusVoiceName = $('statusVoiceName');
+  const statusState = $('statusState');
+  const rateVal = $('rateVal');
+  const volumeVal = $('volumeVal');
+  const stabilityVal = $('stabilityVal');
+  const similarityVal = $('similarityVal');
+  const delayVal = $('delayVal');
+  const distVal = $('distVal');
+  const filterVal = $('filterVal');
+  const voiceCount = $('voiceCount');
+  const chkAutoPlay = $('chkAutoPlay');
+  const chkRepeat = $('chkRepeat');
+  const chkDownload = $('chkDownload');
+
+  // ==================== ESTADO GLOBAL ====================
+  let audioCtx = null;
+  let currentSource = null;
+  let activeAudioBlob = null;
+  let nativeUtterance = null;
+  let currentBase64 = "";
+
+  // Data Mocks Baseadas nas Vozes Mapeadas do seu UI
+  const ELEVEN_VOICES = {
+    'i9MkpDI57TelEanGRF7j': { name: 'Beatriz', desc: 'Jovem, energia juvenil, tom quente. Voz brasileira.', gender: 'F', lang: 'pt-BR' },
+    'tZ2oxQJXfOrGrN7iKnta': { name: 'Mariana', desc: 'Voz feminina enérgica e clara.', gender: 'F', lang: 'pt-BR' },
+    'dX7gRq1dIvLTgUaWpEFn': { name: 'Rafael Valente', desc: 'Narrador profissional brasileiro. Voz cativante.', gender: 'M', lang: 'pt-BR' },
+    'SvP2QJFsRvn3JevnwLQM': { name: 'Cassian', desc: 'Voz masculina profundamente grave e aveludada.', gender: 'M', lang: 'pt-BR' }
+  };
+  const OPENAI_VOICES = {
+    'alloy': { name: 'Alloy', desc: 'Voz neutra e versátil. Equilibrada.', gender: 'N', lang: 'pt-BR' },
+    'onyx': { name: 'Onyx', desc: 'Voz masculina profunda e autoritária.', gender: 'M', lang: 'pt-BR' }
+  };
+  const GEMINI_VOICES = {
+    'Kore': { name: 'Kore', desc: 'Voz padrão Gemini. Clara e natural.', gender: 'F', lang: 'pt-BR' }
+  };
+  const XAI_VOICES = {
+    'eve': { name: 'Eve', desc: 'Voz energética e vibrante.', gender: 'F', lang: 'pt-BR' }
+  };
+
+  function getVoices(p) {
+    if(p === 'elevenlabs') return ELEVEN_VOICES;
+    if(p === 'openai') return OPENAI_VOICES;
+    if(p === 'gemini') return GEMINI_VOICES;
+    if(p === 'xai') return XAI_VOICES;
+    return {};
+  }
+
+  // ==================== INTERFACE & TABS ====================
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      tab.classList.add('active');
+      $('tab-' + tab.dataset.tab).style.display = 'block';
+    });
+  });
+
+  // Atualizações dinâmicas de labels nos Sliders
+  rateEl.addEventListener('input', () => { rateVal.textContent = rateEl.value; updateMeta(); });
+  volumeEl.addEventListener('input', () => volumeVal.textContent = volumeEl.value);
+  stabilityEl.addEventListener('input', () => stabilityVal.textContent = stabilityEl.value);
+  similarityEl.addEventListener('input', () => similarityVal.textContent = similarityEl.value);
+  delayEl.addEventListener('input', () => delayVal.textContent = delayEl.value + 'ms');
+  distortionEl.addEventListener('input', () => distVal.textContent = distortionEl.value + '%');
+  filterEl.addEventListener('input', () => filterVal.textContent = (filterEl.value/1000).toFixed(1) + 'kHz');
+
+  textEl.addEventListener('input', updateMeta);
+
+  function updateMeta() {
+    const len = textEl.value.length;
+    statusChars.textContent = `${len} caracteres`;
+    statusDuration.textContent = `~${Math.round(len / 15 / parseFloat(rateEl.value))}s`;
+  }
+
+  // Frases Rápidas Presetadas
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      textEl.value = btn.dataset.text;
+      updateMeta();
+      if(chkAutoPlay.checked) speak();
+    });
+  });
+
+  // Log centralizado
+  function showLog(msg, type="") {
+    log.innerHTML = msg;
+    log.className = type;
+  }
+
+  // ==================== GESTÃO DE PROVEDORES ====================
+  function renderVoices() {
+    const provider = providerSelect.value;
+    voiceSelect.innerHTML = '';
+    
+    if(provider === 'native') {
+      const nativeVoices = window.speechSynthesis.getVoices();
+      const pt = nativeVoices.filter(v => v.lang.includes('pt'));
+      const final = pt.length ? pt : nativeVoices;
+      final.forEach((v, i) => {
+        voiceSelect.innerHTML += `<option value="${i}">${v.name} (${v.lang})</option>`;
+      });
+      voiceCount.textContent = `(${final.length})`;
+      voiceDescription.textContent = "Usando motor local do navegador. Sem custo de API.";
+      return;
+    }
+
+    const list = getVoices(provider);
+    Object.keys(list).forEach(k => {
+      voiceSelect.innerHTML += `<option value="${k}">${list[k].name}</option>`;
+    });
+    voiceCount.textContent = `(${Object.keys(list).length})`;
+    updateVoiceDesc();
+  }
+
+  function updateVoiceDesc() {
+    const p = providerSelect.value;
+    const v = voiceSelect.value;
+    const list = getVoices(p);
+    if(list[v]) {
+      voiceDescription.textContent = list[v].desc;
+      statusVoiceName.textContent = list[v].name;
+    }
+  }
+
+  providerSelect.addEventListener('change', () => {
+    statusProvider.textContent = providerSelect.options[providerSelect.selectedIndex].text.split(' ')[0];
+    renderVoices();
+  });
+  voiceSelect.addEventListener('change', updateVoiceDesc);
+
+  // Carregar vozes nativas quando carregarem no navegador
+  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = renderVoices;
+  }
+
+  // ==================== PIPELINE DE ÁUDIO WEB AUDIO API ====================
+  async function applyAudioEffects(audioBuffer) {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    const source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.playbackRate.value = parseFloat(rateEl.value);
+
+    let lastNode = source;
+
+    // 1. Efeito de Distorção (WaveShaper)
+    const distAmount = parseFloat(distortionEl.value);
+    if(distAmount > 0) {
+      const shaper = audioCtx.createWaveShaper();
+      shaper.curve = makeDistortionCurve(distAmount * 2);
+      shaper.oversample = '4x';
+      lastNode.connect(shaper);
+      lastNode = shaper;
+    }
+
+    // 2. Filtro Passa Baixa (BiquadFilter)
+    const freq = parseFloat(filterEl.value);
+    if(freq < 20000) {
+      const biquad = audioCtx.createBiquadFilter();
+      biquad.type = 'lowpass';
+      biquad.frequency.value = freq;
+      lastNode.connect(biquad);
+      lastNode = biquad;
+    }
+
+    // 3. Efeito de Eco / Delay
+    const delayTime = parseFloat(delayEl.value);
+    if(delayTime > 0) {
+      const delayNode = audioCtx.createDelay();
+      const feedbackNode = audioCtx.createGain();
+      delayNode.delayTime.value = delayTime / 1000;
+      feedbackNode.gain.value = 0.3; // volume do eco
+
+      lastNode.connect(delayNode);
+      delayNode.connect(feedbackNode);
+      feedbackNode.connect(delayNode); // loopback
+      
+      // mistura sinal original com atrasado
+      const merger = audioCtx.createGain();
+      lastNode.connect(merger);
+      delayNode.connect(merger);
+      lastNode = merger;
+    }
+
+    // 4. Controle de Volume Final
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.value = parseFloat(volumeEl.value);
+    lastNode.connect(gainNode);
+    
+    gainNode.connect(audioCtx.destination);
+    
+    return source;
+  }
+
+  function makeDistortionCurve(amount) {
+    const k = typeof amount === 'number' ? amount : 50;
+    const n_samples = 44100;
+    const curve = new Float32Array(n_samples);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n_samples; ++i) {
+      const x = (i * 2) / n_samples - 1;
+      curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+  }
+
+  // ==================== OPERAÇÃO DE SÍNTESE (SPEAK) ====================
+  async function speak() {
+    const txt = textEl.value.trim();
+    if(!txt) { showLog("Por favor, digite um texto primeiro.", "error"); return; }
+
+    stopAll();
+    setLoadingState(true);
+    showLog("Gerando síntese de IA via Puter...");
+
+    const provider = providerSelect.value;
+    const voice = voiceSelect.value;
+
+    // Caso de uso: Síntese Nativa Offline
+    if(provider === 'native') {
+      nativeUtterance = new SpeechSynthesisUtterance(txt);
+      const voices = window.speechSynthesis.getVoices();
+      if(voices[voice]) nativeUtterance.voice = voices[voice];
+      nativeUtterance.rate = parseFloat(rateEl.value);
+      nativeUtterance.volume = parseFloat(volumeEl.value);
+      
+      nativeUtterance.onend = () => setLoadingState(false);
+      nativeUtterance.onerror = () => setLoadingState(false);
+      
+      window.speechSynthesis.speak(nativeUtterance);
+      saveToHistory(txt, "Nativo");
+      return;
+    }
+
+    try {
+      // Chamada oficial à inteligência artificial integrada do Puter.js
+      const audioResult = await puter.ai.txt2speech(txt, {
+        provider: provider,
+        voice: voice,
+        model: provider === 'elevenlabs' ? modelSelect.value : undefined,
+        stability: provider === 'elevenlabs' ? parseFloat(stabilityEl.value) : undefined,
+        similarity: provider === 'elevenlabs' ? parseFloat(similarityEl.value) : undefined
+      });
+
+      activeAudioBlob = audioResult.blob;
+      const arrayBuffer = await activeAudioBlob.arrayBuffer();
+      
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      
+      currentSource = await applyAudioEffects(audioBuffer);
+      currentSource.start(0);
+      
+      // Habilitar botões extras
+      downloadBtn.disabled = false;
+      copyBtn.disabled = false;
+      
+      // Gerar Base64 para cópia rápida
+      const reader = new FileReader();
+      reader.readAsDataURL(activeAudioBlob);
+      reader.onloadend = () => { currentBase64 = reader.result; };
+
+      showLog("Reproduzindo áudio com efeitos...", "success");
+
+      currentSource.onended = () => {
+        setLoadingState(false);
+      };
+
+      saveToHistory(txt, provider);
+
+      if(chkDownload.checked) downloadAudio();
+
+    } catch(err) {
+      showLog("Erro ao processar áudio: " + err.message, "error");
+      setLoadingState(false);
+    }
+  }
+
+  function stopAll() {
+    if(currentSource) { try{currentSource.stop();}catch(e){} currentSource = null; }
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    setLoadingState(false);
+  }
+
+  function setLoadingState(isLoading) {
+    speakBtn.disabled = isLoading;
+    stopBtn.disabled = !isLoading;
+    loadingIndicator.style.display = isLoading ? 'inline-block' : 'none';
+    statusState.textContent = isLoading ? '⏳ Executando' : '⏹ Pronto';
+  }
+
+  function downloadAudio() {
+    if(!activeAudioBlob) return;
+    const url = URL.createObjectURL(activeAudioBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hackertts-${Date.now()}.mp3`;
+    a.click();
+  }
+
+  // ==================== HISTÓRICO & PRESETS LOCALSTORAGE ====================
+  function saveToHistory(text, prov) {
+    let history = JSON.parse(localStorage.getItem('htts_hist') || '[]');
+    history.unshift({ text, prov, date: new Date().toLocaleTimeString() });
+    if(history.length > 30) history.pop();
+    localStorage.setItem('htts_hist', JSON.stringify(history));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    let history = JSON.parse(localStorage.getItem('htts_hist') || '[]');
+    historyList.innerHTML = history.map(h => `
+      <div class="history-item">
+        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%;">${h.text}</span>
+        <small style="color:var(--accent)">${h.prov} (${h.date})</small>
+      </div>
+    `).join('');
+  }
+
+  savePresetBtn.addEventListener('click', () => {
+    const name = presetName.value.trim() || 'Preset X';
+    let localPresets = JSON.parse(localStorage.getItem('htts_presets') || '[]');
+    localPresets.push({
+      name,
+      provider: providerSelect.value,
+      rate: rateEl.value,
+      filter: filterEl.value,
+      distortion: distortionEl.value
+    });
+    localStorage.setItem('htts_presets', JSON.stringify(localPresets));
+    presetName.value = '';
+    renderPresets();
+  });
+
+  function renderPresets() {
+    let localPresets = JSON.parse(localStorage.getItem('htts_presets') || '[]');
+    presetList.innerHTML = localPresets.map((p, i) => `
+      <div class="preset-item">
+        <strong>${p.name}</strong>
+        <small style="color:var(--muted)">Provedor: ${p.provider}</small>
+        <button class="btn btn-sm btn-outline" onclick="window.loadPreset(${i})">Aplicar</button>
+      </div>
+    `).join('');
+  }
+
+  window.loadPreset = (index) => {
+    let localPresets = JSON.parse(localStorage.getItem('htts_presets') || '[]');
+    const p = localPresets[index];
+    if(p) {
+      providerSelect.value = p.provider;
+      rateEl.value = p.rate; rateVal.textContent = p.rate;
+      filterEl.value = p.filter; filterVal.textContent = (p.filter/1000).toFixed(1) + 'kHz';
+      distortionEl.value = p.distortion; distVal.textContent = p.distortion + '%';
+      renderVoices();
+      showLog(`Preset [${p.name}] carregado.`);
+    }
+  };
+
+  // ==================== BINDINGS DOS BOTÕES ====================
+  speakBtn.addEventListener('click', speak);
+  stopBtn.addEventListener('click', stopAll);
+  downloadBtn.addEventListener('click', downloadAudio);
+  
+  copyBtn.addEventListener('click', () => {
+    if(!currentBase64) return;
+    navigator.clipboard.writeText(currentBase64);
+    showLog("Base64 copiado para área de transferência!", "success");
+  });
+
+  clearBtn.addEventListener('click', () => { textEl.value = ''; updateMeta(); });
+  resetFxBtn.addEventListener('click', () => {
+    delayEl.value = 0; delayVal.textContent = '0ms';
+    distortionEl.value = 0; distVal.textContent = '0%';
+    filterEl.value = 20000; filterVal.textContent = '20kHz';
+    reverbEl.value = 'none';
+  });
+
+  clearHistoryBtn.addEventListener('click', () => {
+    localStorage.setItem('htts_hist', '[]');
+    renderHistory();
+  });
+
+  // Inicialização Inicial
+  renderVoices();
+  renderHistory();
+  renderPresets();
+  showLog("HackerTTS Pro Inicializado com Sucesso e pronto para Operar.");
+
+})();
+</script>
+</body>
+</html>
